@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: airflow
+    component: mariadb
+  name: mariadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow
+      component: mariadb
+  template:
+    metadata:
+      labels:
+        app: airflow
+        component: mariadb
+    spec:
+      containers:
+      - env:
+        - name: MARIADB_ROOT_PASSWORD
+          value: airflow
+        - name: MARIADB_DATABASE
+          value: airflow
+        - name: MARIADB_USER
+          value: airflow
+        - name: MARIADB_PASSWORD
+          value: airflow
+        image: ${DB_IMAGE}
+        imagePullPolicy: Always
+        name: mariadb
+        securityContext:
+          privileged: true
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 3306
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 10
+          initialDelaySeconds: 5
+          periodSeconds: 3
+          successThreshold: 1
+          tcpSocket:
+            port: 3306
+          timeoutSeconds: 1
+        ports:
+        - containerPort: 3306
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mariadb-data
+      restartPolicy: Always
+      volumes:
+      - name: mariadb-data
+        persistentVolumeClaim:
+          claimName: mariadb

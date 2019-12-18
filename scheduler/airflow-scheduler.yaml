@@ -1,0 +1,73 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: airflow-scheduler
+  name: airflow-scheduler
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+      release: airflow
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config: fd949609960165c4794623fa0dd76259b49687506f0306783511ae06f7a59bb7
+        configmap.fabric8.io/update-on-change: airflow-env
+      creationTimestamp: null
+      labels:
+        app: airflow-scheduler
+        release: airflow
+    spec:
+      containers:
+      - args:
+        - scheduler
+        env:
+        - name: AIRFLOW_KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        envFrom:
+        - secretRef:
+            name: airflow-env
+        image: ${AIRFLOW_IMAGE}
+        imagePullPolicy: Always
+        name: scheduler
+        securityContext:
+          privileged: true
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: ${AIRFLOW_HOME}/airflow.cfg
+          name: airflow-config
+          subPath: airflow.cfg
+        #- mountPath: ${AIRFLOW_HOME}/dags
+        #  name: airflow-dags
+        - mountPath: ${AIRFLOW_HOME}/logs
+          name: airflow-logs
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      serviceAccount: airflow-cluster-access
+      serviceAccountName: airflow-cluster-access
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: airflow-logs
+        persistentVolumeClaim:
+          claimName: airflow-logs
+      - configMap:
+          defaultMode: 420
+          name: airflow-config
+        name: airflow-config
+      #- emptyDir: {}
+      #  name: airflow-dags

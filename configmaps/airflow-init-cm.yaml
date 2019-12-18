@@ -1,0 +1,41 @@
+apiVersion: v1
+data:
+  init-airflow.sh: |
+    set -e
+    export USER_ID=$(id -u)
+    export GROUP_ID=$(id -g)
+
+    if ! grep -Fq "${USER_ID}" /etc/passwd; then
+        # current user is an arbitrary
+        # user (its uid is not in the
+        # container /etc/passwd). Let's fix that
+        cat ${HOME}/passwd.template | \
+        sed "s/\${USER_ID}/${USER_ID}/g" | \
+        sed "s/\${GROUP_ID}/${GROUP_ID}/g" | \
+        sed "s/\${HOME}/\/opt\/app-root\/src/g" > /etc/passwd
+
+        cat ${HOME}/group.template | \
+        sed "s/\${USER_ID}/${USER_ID}/g" | \
+        sed "s/\${GROUP_ID}/${GROUP_ID}/g" | \
+        sed "s/\${HOME}/\/opt\/app-root\/src/g" > /etc/group
+    fi
+
+    AIRFLOW_PATH=`pip3 show apache-airflow | grep 'Location: ' | cut -d' ' -f2 || true`
+      if [ -z $AIRFLOW_PY3 ]; then
+         AIRFLOW_PATH=`pip show apache-airflow | grep 'Location: ' | cut -d' ' -f2`
+      fi
+      AIRFLOW_VERSION=`pip freeze | grep apache-airflow | cut -d'=' -f3`
+    cd $AIRFLOW_PATH/airflow
+    airflow upgradedb
+    alembic upgrade heads
+
+    if [[ "$AIRFLOW_VERSION" > "2" ]]; then
+    CREATE_USER="users --create"
+    else
+    CREATE_USER="create_user"
+    fi
+kind: ConfigMap
+metadata:
+  labels:
+    app: airflow
+  name: airflow-init

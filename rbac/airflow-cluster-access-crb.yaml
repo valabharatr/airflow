@@ -1,0 +1,25 @@
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   labels:
+#     app: airflow-scheduler
+#   name: airflow-cluster-access
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: cluster-admin
+# subjects:
+# - kind: ServiceAccount
+#   name: airflow-cluster-access
+#   namespace: airflow
+
+apiVersion: v1
+kind: RoleBinding
+metadata:
+  name: airflow-cluster-access
+roleRef:
+  name: edit
+subjects:
+- kind: ServiceAccount
+  name: airflow-cluster-access
+  namespace: ${AIRFLOW_NAMESPACE}

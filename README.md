@@ -6,7 +6,8 @@ $ bash dockerfiles/airflow/build-docker.sh \
   --image=docker-registry-default.isvapps-poc.yourdomain.com/default/airflow-asis \
   --tag=1.5 \
   --home=/opt/airflow \
-  --version=1.10.5
+  --version=1.10.5 \
+  --kubectl-version=1.10.0
 
 # Create Tag
 $ docker tag \

@@ -20,6 +20,10 @@ echo $var
       AF_VERSION="${var#*=}"                                                                                      
       shift                                                                                                        
       ;;
+    -k=*| --kubectl-version=*)                                                                                                   
+      KUBECTL_VERSION="${var#*=}"                                                                                      
+      shift                                                                                                        
+      ;;
     *)                                                                                                             
       echo "Unknown argument passed: '$var'."
       exit 1                                                                                                       
@@ -30,7 +34,7 @@ done
 IMAGE=${AF_IMAGE:-airflow}
 TAG=${AF_TAG:-latest}
 AIRFLOW_HOME=${AF_HOME:-/usr/local/airflow}
-AIRFLOW_VERSION=${AF_VERSION:-1.4.0}
+AIRFLOW_VERSION=${AF_VERSION:-1.10.6}
 KUBECTL_VERSION=${KUBECTL_VERSION:-1.11.0}
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 

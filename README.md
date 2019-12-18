@@ -1,7 +1,13 @@
 ## AirFlow Deployment on OpenShift
 
 ## How to Setup Airflow
-# Build Docker image
+# Build Docker image for Mariadb
+$ cd dockerfiles/mariadb
+$ docker build --tag=docker-registry-default.isvapps-poc.yourdomain.com/default/mariadb:latest --file Dockerfile .
+$ docker tag docker-registry-default.isvapps-poc.yourdomain.com/default/mariadb:latest docker-registry.default.svc:5000/default/mariadb:latest
+$ docker push docker-registry.default.svc:5000/default/mariadb:latest
+
+# Build Docker image for Airflow
 $ bash dockerfiles/airflow/build-docker.sh \
   --image=docker-registry-default.isvapps-poc.yourdomain.com/default/airflow-asis \
   --tag=1.5 \

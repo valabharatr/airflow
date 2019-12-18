@@ -394,13 +394,13 @@ data:
 
     [kubernetes]
     dags_in_image = True
-    worker_container_repository = docker-registry-default.isvapps-poc.yourdomain.com/default/airflow-asis
-    worker_container_tag = 1.5
+    worker_container_repository = ${AIRFLOW_IMAGE_NAME}
+    worker_container_tag = ${AIRFLOW_IMAGE_TAG}
     worker_container_image_pull_policy = IfNotPresent
     delete_worker_pods = True
     in_cluster = true
     #run_as_user = default
-    namespace = afdec
+    namespace = ${AIRFLOW_NAMESPACE}
     #kube_client_request_args = {{"_request_timeout" : [60,60] }}
 
     [kubernetes_secrets]

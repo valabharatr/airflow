@@ -62,8 +62,12 @@ fi
 
 DEFAULT_AIRFLOW_IMAGE="serverbee/airflow:latest"
 AIRFLOW_IMAGE=${AIRFLOW_IMAGE:-${DEFAULT_AIRFLOW_IMAGE}}
+AIRFLOW_IMAGE_TAG=${AIRFLOW_IMAGE#*:}
+AIRFLOW_IMAGE_NAME=${AIRFLOW_IMAGE%:*}
+
 DEFAULT_DB_IMAGE="mariadb/server:latest"
 DB_IMAGE=${DB_IMAGE:-${DEFAULT_DB_IMAGE}}
+
 DEFAULT_AIRFLOW_HOME="/usr/local/airflow"
 AIRFLOW_HOME=${AIRFLOW_HOME:-${DEFAULT_AIRFLOW_HOME}}
 AIRFLOW_HOME_BASE64=$(echo -n ${AIRFLOW_HOME:-${DEFAULT_AIRFLOW_HOME}} | base64)
@@ -143,7 +147,7 @@ deploy() {
   cat secrets/airflow-env-secret.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME_BASE64}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
   oc apply -f secrets/webserver-config-secret.yaml -n ${AIRFLOW_NAMESPACE} | beautify
   printInfo "Creating ConfigMaps. Namespace for DAGs: ${AIRFLOW_NAMESPACE}. Run pods as user: ${NAMESPACE_UID}"
-  cat configmaps/airflow-config-cm.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME}@g" | sed "s/\${AIRFLOW_NAMESPACE}/${AIRFLOW_NAMESPACE}/g" | sed "s/\${NAMESPACE_UID}/${NAMESPACE_UID}/g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
+  cat configmaps/airflow-config-cm.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME}@g" | sed "s@\${AIRFLOW_NAMESPACE}@${AIRFLOW_NAMESPACE}@g" | sed "s@\${NAMESPACE_UID}@${NAMESPACE_UID}@g" | sed "s@\${AIRFLOW_IMAGE_NAME}@${AIRFLOW_IMAGE_NAME}@g" | sed "s@\${AIRFLOW_IMAGE_TAG}@${AIRFLOW_IMAGE_TAG}@g" | sed "s@\${AIRFLOW_NAMESPACE}@${AIRFLOW_NAMESPACE}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
   oc apply -f configmaps/airflow-init-cm.yaml -n ${AIRFLOW_NAMESPACE} | beautify
   printInfo "Creating service account and rolebinding to be able to schedule DAG pods in project '${AIRFLOW_NAMESPACE}'"
   cat rbac/airflow-cluster-access-crb.yaml | sed "s/\${AIRFLOW_NAMESPACE}/${AIRFLOW_NAMESPACE}/g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify

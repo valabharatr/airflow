@@ -26,6 +26,8 @@ $ docker build \
      --build-arg AIRFLOW_HOME="/opt/airflow" \
      --tag=docker-registry-default.isvapps-poc.yourdomain.com/default/af:1.10 .
 
+$ cd ../..
+
 # Create Tag
 $ docker tag \
   docker-registry-default.isvapps-poc.yourdomain.com/default/af:1.10 \

@@ -5,7 +5,10 @@
 
 $ cd dockerfiles/mariadb
 
-$ docker build --tag=docker-registry-default.isvapps-poc.yourdomain.com/default/mariadb:latest --file Dockerfile .
+$ docker build \
+  --no-cache \
+  --tag=docker-registry-default.isvapps-poc.yourdomain.com/default/mariadb:latest \
+  --file Dockerfile .
 
 $ docker tag docker-registry-default.isvapps-poc.yourdomain.com/default/mariadb:latest docker-registry.default.svc:5000/default/mariadb:latest
 

@@ -31,7 +31,7 @@ spec:
         - webserver
         env:
         - name: AIRFLOW_CONFIG
-          value: /config/airflow.cfg
+          value: ${AIRFLOW_HOME}/airflow.cfg
         - name: AIRFLOW_KUBE_NAMESPACE
           valueFrom:
             fieldRef:
@@ -73,8 +73,11 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
-        - mountPath: /config
+        #- mountPath: /config
+        #  name: airflow-config
+        - mountPath: ${AIRFLOW_HOME}/airflow.cfg
           name: airflow-config
+          subPath: airflow.cfg
         - mountPath: ${AIRFLOW_HOME}/webserver_config.py
           name: webserver-config
         #- mountPath: ${AIRFLOW_HOME}/dags
@@ -92,17 +95,20 @@ spec:
         image: ${AIRFLOW_IMAGE}
         imagePullPolicy: Always
         name: init-airflow
-        securityContext:
-          privileged: true
+        #securityContext:
+        #  privileged: true
         env:
         - name: AIRFLOW_CONFIG
-          value: /config/airflow.cfg
+          value: ${AIRFLOW_HOME}/airflow.cfg
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
-        - mountPath: /config
+        #- mountPath: /config
+        #  name: airflow-config
+        - mountPath: ${AIRFLOW_HOME}/airflow.cfg
           name: airflow-config
+          subPath: airflow.cfg
         - mountPath: /entrypoint
           name: init-airflow
       restartPolicy: Always

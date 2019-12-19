@@ -4,6 +4,8 @@ data:
     set -e
     export USER_ID=$(id -u)
     export GROUP_ID=$(id -g)
+    export AIRFLOW_HOME=${AIRFLOW_HOME}
+    export AIRFLOW_CONFIG=${AIRFLOW_HOME}/airflow.cfg
 
     if ! grep -Fq "${USER_ID}" /etc/passwd; then
         # current user is an arbitrary

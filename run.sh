@@ -139,8 +139,8 @@ deploy() {
   printInfo "Deploying Airflow to project '${AIRFLOW_NAMESPACE}' using '${AIRFLOW_IMAGE}'"
   printInfo "Deploying Mariadb"
   cat mariadb/mariadb-deployment.yaml | sed "s@\${DB_IMAGE}@${DB_IMAGE}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
-  oc apply -f mariadb/mariadb-pv.yaml -n ${AIRFLOW_NAMESPACE} | beautify
-  oc apply -f mariadb/mariadb-pvc.yaml -n ${AIRFLOW_NAMESPACE} | beautify
+  #oc apply -f mariadb/mariadb-pv.yaml -n ${AIRFLOW_NAMESPACE} | beautify
+  #oc apply -f mariadb/mariadb-pvc.yaml -n ${AIRFLOW_NAMESPACE} | beautify
   oc apply -f mariadb/mariadb-svc.yaml -n ${AIRFLOW_NAMESPACE} | beautify
   waitForDeployment mariadb
   printInfo "Creating secrets"
@@ -148,15 +148,15 @@ deploy() {
   oc apply -f secrets/webserver-config-secret.yaml -n ${AIRFLOW_NAMESPACE} | beautify
   printInfo "Creating ConfigMaps. Namespace for DAGs: ${AIRFLOW_NAMESPACE}. Run pods as user: ${NAMESPACE_UID}"
   cat configmaps/airflow-config-cm.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME}@g" | sed "s@\${AIRFLOW_NAMESPACE}@${AIRFLOW_NAMESPACE}@g" | sed "s@\${NAMESPACE_UID}@${NAMESPACE_UID}@g" | sed "s@\${AIRFLOW_IMAGE_NAME}@${AIRFLOW_IMAGE_NAME}@g" | sed "s@\${AIRFLOW_IMAGE_TAG}@${AIRFLOW_IMAGE_TAG}@g" | sed "s@\${AIRFLOW_NAMESPACE}@${AIRFLOW_NAMESPACE}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
-  oc apply -f configmaps/airflow-init-cm.yaml -n ${AIRFLOW_NAMESPACE} | beautify
+  cat configmaps/airflow-init-cm.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
   printInfo "Creating service account and rolebinding to be able to schedule DAG pods in project '${AIRFLOW_NAMESPACE}'"
   cat rbac/airflow-cluster-access-crb.yaml | sed "s/\${AIRFLOW_NAMESPACE}/${AIRFLOW_NAMESPACE}/g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
   oc apply -f rbac/airflow-cluster-access-sa.yaml -n ${AIRFLOW_NAMESPACE} | beautify
   printInfo "Deploying scheduler"
-  oc apply -f scheduler/airflow-logs-pv.yaml -n ${AIRFLOW_NAMESPACE} | beautify
-  oc apply -f scheduler/airflow-logs-pvc.yaml -n ${AIRFLOW_NAMESPACE} | beautify
+  #oc apply -f scheduler/airflow-logs-pv.yaml -n ${AIRFLOW_NAMESPACE} | beautify
+  #oc apply -f scheduler/airflow-logs-pvc.yaml -n ${AIRFLOW_NAMESPACE} | beautify
   cat scheduler/airflow-scheduler.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME}@g" | sed "s@\${AIRFLOW_IMAGE}@${AIRFLOW_IMAGE}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
-  cat web/airflow-web.yaml | sed "s@\${AIRFLOW_IMAGE}@${AIRFLOW_IMAGE}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
+  cat web/airflow-web.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME}@g" | sed "s@\${AIRFLOW_IMAGE}@${AIRFLOW_IMAGE}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
   printInfo "Deploying web client"
   oc apply -f web/airflow-web-svc.yaml -n ${AIRFLOW_NAMESPACE} | beautify
   oc apply -f web/airflow-web-route.yaml -n ${AIRFLOW_NAMESPACE} | beautify

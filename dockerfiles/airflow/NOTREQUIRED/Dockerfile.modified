@@ -1,0 +1,201 @@
+FROM centos/python-36-centos7:latest
+
+# Never prompts the user for choices on installation/configuration of packages
+ENV TERM linux
+ENV LD_LIBRARY_PATH=/opt/rh/rh-python36/root/usr/lib64
+
+# Airflow
+ARG AIRFLOW_VERSION
+ARG AIRFLOW_HOME
+ARG AIRFLOW_DEPS
+ARG PYTHON_DEPS
+ARG KUBECTL_VERSION
+
+# Define en_US.
+ENV LANGUAGE en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+ENV LC_CTYPE en_US.UTF-8
+ENV LC_MESSAGES en_US.UTF-8
+
+USER root
+
+# Environment Variables
+ENV AIRFLOW_GPL_UNIDECODE yes
+ENV SLUGIFY_USES_TEXT_UNIDECODE=yes
+ENV REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt
+ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.232.b09-0.el7_7.x86_64/jre 
+ENV HOME ${AIRFLOW_HOME}
+ENV AIRFLOW_HOME ${AIRFLOW_HOME}
+
+#ENV HTTP_PROXY "http://172.18.0.1:3128"
+#ENV HTTPS_PROXY "http://172.18.0.1:3128"
+#ENV NO_PROXY "192.168.99.100,127.0.0.1,localhost,10.240.210.130,172.30.1.1,172.17.0.1,172.18.0.1,ulvsecad04.devfg.example.com,*.example.com,.example.com,example.com,nip.io"
+
+
+## yum repos
+#COPY files/yumrepos/bintray-sbt-rpm.repo /etc/yum.repos.d/
+#COPY files/yumrepos/HDP.repo /etc/yum.repos.d/
+#COPY files/yumrepos/epel-internal.repo /etc/yum.repos.d/
+
+RUN yum -y install epel-release
+RUN yum -y install git wget java-1.8.0-openjdk vim
+
+RUN set -ex \
+    && buildDeps=' \
+        freetds-dev \
+        libkrb5-dev \
+        libsasl2-dev \
+        libssl-dev \
+        libffi-dev \
+        libpq-dev \
+    ' \
+    && yum update -yqq \
+    && yum upgrade -yqq \
+    && yum install -yqq  \
+        $buildDeps \
+        freetds-bin \
+        build-essential \
+        default-libmysqlclient-dev \
+        apt-utils \
+        curl \
+        rsync \
+        netcat \
+        locales \
+        libpq5 \
+        git \
+    && pip install -U pip setuptools wheel \
+    && pip install pytz \
+    && pip install psycopg2-binary \
+    && pip install psycopg2 \
+    && pip install pyOpenSSL \
+    && pip install ndg-httpsclient \
+    && pip install pyasn1 \
+    && pip install apache-airflow[async,kubernetes,s3,statsd,crypto,celery,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
+    && pip install 'redis>=2.10.5,<3' \
+    && pip install futures async celery crypto kubernetes mysql s3 statsd python-ldap mysqlclient flask_bcrypt plotly scipy seaborn theano openpyxl tensorflow keras sklearn h5py jellyfish tldextract joypy python-Levenshtein matplotlib yara-python pillow requests networkx \
+    && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
+    && yum remove -y $buildDeps \
+    && yum clean all
+
+## get dags
+# RUN mkdir /root/.ssh
+#COPY files/sshkeys/* /root/.ssh/
+#RUN chmod 0700 /root/.ssh && chmod 600 /root/.ssh/id_rsa && chmod 600 /root/.ssh/id_rsa.pub
+#RUN ssh-keyscan examplegithub.fg.example.com > /root/.ssh/known_hosts
+#RUN ssh-agent bash -c 'ssh-add /root/.ssh/id_rsa; git clone git@examplegithub.fg.example.com:FGH/cyber_airflow.git'
+
+## make dirs
+#RUN mkdir -p $AIRFLOW_HOME && \
+#    mkdir $AIRFLOW_HOME/dags && \
+#    mkdir $AIRFLOW_HOME/logs
+#RUN mv cyber_airflow/* /app/fgh/airflow/
+#RUN rm -rf cyber_airflow/
+
+##ARG YUM_DEPENDENCIES="mariadb-devel openldap-devel mysql-devel mariadb python-devel python-dateutil gcc libffi-devel zlib-devel openssl-devel"
+
+RUN yum install -y \
+    @development \
+    mariadb-devel openldap-devel mysql-devel mariadb python-devel python-dateutil gcc libffi-devel zlib-devel openssl-devel \
+    && yum -y clean all \
+    && rm -rf /var/cache/yum
+
+
+#RUN yum -y install hadoop-client hdp-select hive sqoop krb5-workstation krb5-devel openssl-devel \
+#    libxml2-devel supervisor libs3 nginx octave libmpc-devel cairo cairo-devel cairomm-devel unixODBC unixODBC-devel
+
+
+#ARG AIRFLOW_VERSION=1.10.5
+# Default args designed for deploying with the included Openshift template
+#ARG AIRFLOW_EXTRAS=async,celery,crypto,kubernetes,mysql,s3,statsd
+#ARG PIP_DEPENDENCIES="python-ldap mysqlclient"
+
+#RUN pip install --upgrade pip
+#RUN pip install --upgrade setuptools
+
+#RUN pip install "apache-airflow[$AIRFLOW_EXTRAS]==$AIRFLOW_VERSION" $PIP_DEPENDENCIES
+
+##RUN pip install futures async celery crypto kubernetes mysql s3 statsd python-ldap mysqlclient flask_bcrypt \
+##    plotly scipy seaborn theano openpyxl tensorflow keras sklearn h5py jellyfish tldextract joypy python-Levenshtein \
+##    matplotlib yara-python pillow requests networkx 
+
+
+# Install directly from example Nexus once the whereisit python pipeline is setup
+#RUN pip install --no-cache-dir $AIRFLOW_HOME/example_airflow_ldap-1.2.0.tar.gz
+
+##RUN mkdir -p $AIRFLOW_LOGS && \
+##    mkdir -p $AIRFLOW_LOGS_SCHEDULER && \
+##    mkdir -p $AIRFLOW_PLUGIN \
+##    mkdir -p $AIRFLOW_HOME/logs \
+##    mkdir -p $AIRFLOW_HOME/titan \
+##    mkdir -p /var/log/airflowlog
+
+RUN mkdir -p ${AIRFLOW_HOME}
+
+COPY files/scripts/scheduler_health_check.py $AIRFLOW_HOME/scheduler_health_check.py
+
+##RUN chown -R 1001:0 $AIRFLOW_LOGS_SCHEDULER && \
+##    chown -R 1001:0 $AIRFLOW_HOME && \
+##    chown -R 1001:0 $AIRFLOW_LOGS && \
+##    chown -R 1001:0 /usr/lib/python2.7 && \
+##    chown -R 1001:0 /usr/lib64/python2.7 && \
+##    chmod 755 /usr/lib/python2.7 && \
+##    chmod 755 /usr/lib64/python2.7 && \
+##    chmod -R 777 $AIRFLOW_LOGS && \
+##    chmod -R 777 $AIRFLOW_HOME && \
+##    chmod -R 777 /var/log/airflowlog && \
+##    chmod -R 777 $AIRFLOW_LOGS_SCHEDULER && \
+##    chmod g=u /etc/passwd
+
+RUN chown -R 1001:0 $AIRFLOW_HOME && \
+    chown -R 1001:0 /usr/lib/python2.7 && \
+    chown -R 1001:0 /usr/lib64/python2.7 && \
+    chmod 755 /usr/lib/python2.7 && \
+    chmod 755 /usr/lib64/python2.7 && \
+    chmod -R 777 $AIRFLOW_HOME && \
+    chmod g=u /etc/passwd
+
+##COPY files/scripts/uid_entrypoint.sh /uid_entrypoint.sh
+##COPY files/scripts/get_num_cores.sh /get_num_cores.sh
+COPY uid_entrypoint.sh /uid_entrypoint.sh
+COPY get_num_cores.sh /get_num_cores.sh
+RUN chmod 755 /uid_entrypoint.sh && \
+    chmod 755 /get_num_cores.sh
+#COPY files/airflow.cfg $AIRFLOW_HOME/airflow.cfg
+
+
+#COPY files/titan/client_jaas.conf /app/fgh
+##COPY files/bashrc /app/.bashrc
+##RUN chown -R 1001 /app
+##RUN chmod -R 755 * /app
+##RUN chmod 644 /app/.bashrc && chown 1001 /app/.bashrc
+
+
+##RUN chgrp -R 0 $AIRFLOW_HOME && chmod -R 777 $AIRFLOW_HOME
+#RUN chgrp -R 0 /etc/titan && chmod -R 777 /etc/titan
+##RUN chgrp -R 0 /app/fgh/airflow && chmod -R 777 /app/fgh/airflow
+##RUN chgrp -R 0 /var/log/airflow && chmod -R 777 /var/log/airflow
+
+##RUN chown -R 1001:0 /app
+#RUN chown -R 1001:0 /etc/titan
+#RUN chown -R 1001:0 /root/titan_conf
+##RUN chown -R 1001:0 /var/log/airflow
+##RUN chmod -R 775 /app && \
+#   chmod -R 775 /etc/titan && \
+#    chmod -R 775 /root/titan_conf && \
+##    chmod -R 775 /var/log/airflow
+
+#RUN mkdir /usr/local/airflow
+#RUN chgrp -R 0 /usr/local/airflow && chmod -R 777 /usr/local/airflow
+
+RUN yum -y clean all && rm -rf /var/cache/yum
+
+RUN curl -L -o /usr/local/bin/kubectl \
+        https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
+        chmod +x /usr/local/bin/kubectl
+
+USER 1001
+WORKDIR ${AIRFLOW_HOME}
+ENTRYPOINT ["/uid_entrypoint.sh"]
+EXPOSE 8080
+CMD ["webserver"]

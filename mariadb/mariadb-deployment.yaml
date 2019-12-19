@@ -30,8 +30,8 @@ spec:
         image: ${DB_IMAGE}
         imagePullPolicy: Always
         name: mariadb
-        securityContext:
-          privileged: true
+        #securityContext:
+        #  privileged: true
         livenessProbe:
           failureThreshold: 3
           initialDelaySeconds: 30
@@ -51,11 +51,11 @@ spec:
         ports:
         - containerPort: 3306
         resources: {}
-        volumeMounts:
-        - mountPath: /var/lib/mysql
-          name: mariadb-data
+        #volumeMounts:
+        #- mountPath: /var/lib/mysql
+        #  name: mariadb-data
       restartPolicy: Always
-      volumes:
-      - name: mariadb-data
-        persistentVolumeClaim:
-          claimName: mariadb
+      #volumes:
+      #- name: mariadb-data
+      #  persistentVolumeClaim:
+      #    claimName: mariadb

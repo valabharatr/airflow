@@ -11,12 +11,12 @@ data:
         # current user is an arbitrary
         # user (its uid is not in the
         # container /etc/passwd). Let's fix that
-        cat ${HOME}/passwd.template | \
+        cat /opt/app-root/src/passwd.template | \
         sed "s/\${USER_ID}/${USER_ID}/g" | \
         sed "s/\${GROUP_ID}/${GROUP_ID}/g" | \
         sed "s/\${HOME}/\/opt\/app-root\/src/g" > /etc/passwd
 
-        cat ${HOME}/group.template | \
+        cat /opt/app-root/src/group.template | \
         sed "s/\${USER_ID}/${USER_ID}/g" | \
         sed "s/\${GROUP_ID}/${GROUP_ID}/g" | \
         sed "s/\${HOME}/\/opt\/app-root\/src/g" > /etc/group

@@ -94,6 +94,20 @@ RUN curl -L -o /usr/local/bin/kubectl \
         https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
         chmod +x /usr/local/bin/kubectl
 
+RUN mkdir -p ${AIRFLOW_HOME} /git && for f in "${AIRFLOW_HOME}" "/etc/passwd" "/etc/group" "/git"; do\
+          chgrp -R 0 ${f} && \
+          chmod -R g+rwX ${f} && \
+          chmod -R 777 ${AIRFLOW_HOME} /git; \
+        done && \
+        # Generate passwd.template \
+        cat /etc/passwd | \
+        sed s#default:x.*#default:x:\${USER_ID}:\${GROUP_ID}::\${HOME}:/bin/bash#g \
+        > /opt/app-root/src/passwd.template && \
+        # Generate group.template \
+        cat /etc/group | \
+        sed s#root:x:0:#root:x:0:0,\${USER_ID}:#g \
+        > /opt/app-root/src/group.template
+
 USER 1001
 WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["/uid_entrypoint.sh"]

@@ -53,8 +53,8 @@ spec:
           successThreshold: 1
           timeoutSeconds: 5
         name: webserver
-        securityContext:
-          privileged: true
+        #securityContext:
+        #  privileged: true
         ports:
         - containerPort: 8080
           name: webserver

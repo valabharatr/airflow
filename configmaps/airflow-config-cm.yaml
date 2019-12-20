@@ -396,16 +396,21 @@ data:
     dags_in_image = True
     worker_container_repository = ${AIRFLOW_IMAGE_NAME}
     worker_container_tag = ${AIRFLOW_IMAGE_TAG}
-    worker_container_image_pull_policy = IfNotPresent
+    worker_container_image_pull_policy = Never
     delete_worker_pods = True
     in_cluster = true
     #run_as_user = default
     namespace = ${AIRFLOW_NAMESPACE}
-    #kube_client_request_args = {{"_request_timeout" : [60,60] }}
+    airflow_configmap = airflow-config
+    run_as_user = 1000377777
 
-    [kubernetes_secrets]
+    #[kubernetes_secrets]
     #AIRFLOW__CORE__SQL_ALCHEMY_CONN = sqla+mysql://airflow:airflow@mariadb:3306/airflow
     #AIRFLOW_HOME = ${AIRFLOW_HOME}
+
+    [kubernetes_environment_variables]
+    AIRFLOW_HOME = ${AIRFLOW_HOME}
+    AIRFLOW__CORE__EXECUTOR = KubernetesExecutor  
 
 kind: ConfigMap
 metadata:

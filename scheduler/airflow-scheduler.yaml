@@ -40,7 +40,7 @@ spec:
         - secretRef:
             name: airflow-env
         image: ${AIRFLOW_IMAGE}
-        imagePullPolicy: Always
+        imagePullPolicy: Never
         name: scheduler
         #securityContext:
         #  privileged: true

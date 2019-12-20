@@ -1,10 +1,25 @@
 #!/usr/bin/env bash
+set -x 
 
-if ! whoami &> /dev/null; then
-  if [ -w /etc/passwd ]; then
-    echo "${USER_NAME:-default}:x:$(id -u):0:${USER_NAME:-default} user:${HOME}:/sbin/nologin" >> /etc/passwd
-  fi
+function set_user {
+export USER_ID=$(id -u)
+export GROUP_ID=$(id -g)
+
+if ! grep -Fq "${USER_ID}" /etc/passwd; then
+   # current user is an arbitrary
+   # user (its uid is not in the
+   # container /etc/passwd). Let's fix that
+   cat /opt/app-root/src/passwd.template | \
+   sed "s/\${USER_ID}/${USER_ID}/g" | \
+   sed "s/\${GROUP_ID}/${GROUP_ID}/g" | \
+   sed "s/\${HOME}/\/opt\/app-root\/src/g" > /etc/passwd
+
+   cat /opt/app-root/src/group.template | \
+   sed "s/\${USER_ID}/${USER_ID}/g" | \
+   sed "s/\${GROUP_ID}/${GROUP_ID}/g" | \
+   sed "s/\${HOME}/\/opt\/app-root\/src/g" > /etc/group
 fi
+}
 
 if [[ ! ${AIRFLOW__SCHEDULER__MAX_THREADS+x} ]]; then
     # Set default for max threads to the number of cores available on the system.
@@ -19,6 +34,7 @@ fi
 
 case "$1" in
   local)
+    set_user
     airflow initdb
     airflow scheduler &
     exec airflow "webserver"
@@ -26,19 +42,24 @@ case "$1" in
   scheduler)
     # Run initdb on scheduler startup as scheduler is the only service guaranteed to have a
     # single pod
+    set_user
     airflow initdb
     exec airflow "scheduler"
     ;;
   worker)
+    set_user
     export C_FORCE_ROOT=true # Celery thinks we're running as root and blocks startup without this
     exec airflow "worker"
     ;;
   flower|version|webserver)
+    set_user
     exec airflow "$@"
     ;;
   *)
     # The command is something like bash, not an airflow subcommand. Just run it in the right
     # environment.
-    exec "$@"
+    echo "${USER_NAME:-default}:x:$(id -u):0:${USER_NAME:-default} user:${HOME}:/sbin/nologin" >> /etc/passwd
+    #exec "$@"
+    $@
     ;;
 esac

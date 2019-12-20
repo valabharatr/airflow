@@ -28,7 +28,7 @@ spec:
         - name: MARIADB_PASSWORD
           value: airflow
         image: ${DB_IMAGE}
-        imagePullPolicy: Always
+        imagePullPolicy: Never
         name: mariadb
         #securityContext:
         #  privileged: true

@@ -106,8 +106,7 @@ RUN mkdir -p ${AIRFLOW_HOME} /git && for f in "${AIRFLOW_HOME}" "/etc/passwd" "/
         # Generate group.template \
         cat /etc/group | \
         sed s#root:x:0:#root:x:0:0,\${USER_ID}:#g \
-        > /opt/app-root/src/group.template && \
-        echo "${USER_NAME:-default}:x:1000397777:0:${USER_NAME:-default} user:${HOME}:/sbin/nologin" >> /etc/passwd
+        > /opt/app-root/src/group.template
 
 USER 1001
 WORKDIR ${AIRFLOW_HOME}

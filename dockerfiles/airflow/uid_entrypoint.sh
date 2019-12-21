@@ -59,7 +59,6 @@ case "$1" in
     # The command is something like bash, not an airflow subcommand. Just run it in the right
     # environment.
     echo "${USER_NAME:-default}:x:$(id -u):0:${USER_NAME:-default} user:${HOME}:/sbin/nologin" >> /etc/passwd
-    #exec "$@"
-    $@
+    exec "$@"
     ;;
 esac

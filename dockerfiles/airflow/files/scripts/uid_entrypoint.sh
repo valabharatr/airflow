@@ -34,7 +34,8 @@ fi
 
 case "$1" in
   local)
-    set_user
+#    set_user
+    echo "${USER_NAME:-default}:x:$(id -u):0:${USER_NAME:-default} user:${HOME}:/sbin/nologin" >> /etc/passwd
     airflow initdb
     airflow scheduler &
     exec airflow "webserver"
@@ -42,17 +43,20 @@ case "$1" in
   scheduler)
     # Run initdb on scheduler startup as scheduler is the only service guaranteed to have a
     # single pod
-    set_user
+#    set_user
+    echo "${USER_NAME:-default}:x:$(id -u):0:${USER_NAME:-default} user:${HOME}:/sbin/nologin" >> /etc/passwd
     airflow initdb
     exec airflow "scheduler"
     ;;
   worker)
-    set_user
+#    set_user
+    echo "${USER_NAME:-default}:x:$(id -u):0:${USER_NAME:-default} user:${HOME}:/sbin/nologin" >> /etc/passwd
     export C_FORCE_ROOT=true # Celery thinks we're running as root and blocks startup without this
     exec airflow "worker"
     ;;
   flower|version|webserver)
-    set_user
+#    set_user
+    echo "${USER_NAME:-default}:x:$(id -u):0:${USER_NAME:-default} user:${HOME}:/sbin/nologin" >> /etc/passwd
     exec airflow "$@"
     ;;
   *)

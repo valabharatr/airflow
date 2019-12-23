@@ -28,10 +28,9 @@ export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.232.b09-0.el7_7.x86_64/jr
 export JRE_HOME=$JAVA_HOME
 export PATH=/app/fgh/anaconda/bin:$JAVA_HOME/bin:$PATH
 
-#export PYSPARK_PYTHON=/opt/anaconda/bin/python
-export PYSPARK_PYTHON=/usr/bin/python2
+export PYSPARK_PYTHON=/opt/anaconda/bin/python
 #export PYSPARK_DRIVER_PYTHON=/app/fgh/anaconda/bin/python
-export PYSPARK_DRIVER_PYTHON=/usr/bin/python2
+export PYSPARK_DRIVER_PYTHON=/opt/anaconda/bin/python
 
 
 export HDP_VERSION=2.6.5.106-2
@@ -40,6 +39,6 @@ export KAFKA_OPTS="-Djava.security.auth.login.config=/app/fgh//kafka_client_jaas
 
 export AIRFLOW_HOME=/app/fgh/airflow
 
-
+export vault_token=s.igzPizVADA6Xes6oghXOYQTH
 
 

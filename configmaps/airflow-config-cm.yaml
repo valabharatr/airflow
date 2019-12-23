@@ -8,7 +8,7 @@ data:
     # The folder where your airflow pipelines live, most likely a
     # subfolder in a code repository
     # This path must be absolute
-    dags_folder = ${AIRFLOW_HOME}/dags/repo/airflow
+    dags_folder = ${AIRFLOW_HOME}/dags
 
     # The folder where airflow should store its log files
     # This path must be absolute
@@ -399,13 +399,20 @@ data:
     worker_container_image_pull_policy = Never
     delete_worker_pods = True
     in_cluster = true
+    #run_as_user = default
     namespace = ${AIRFLOW_NAMESPACE}
     airflow_configmap = airflow-config
+    #run_as_user = 1000377777
     run_as_user = 1001
+
+    #[kubernetes_secrets]
+    #AIRFLOW__CORE__SQL_ALCHEMY_CONN = sqla+mysql://airflow:airflow@mariadb:3306/airflow
+    #AIRFLOW_HOME = ${AIRFLOW_HOME}
 
     [kubernetes_environment_variables]
     AIRFLOW_HOME = ${AIRFLOW_HOME}
     AIRFLOW__CORE__EXECUTOR = KubernetesExecutor  
+
 kind: ConfigMap
 metadata:
   labels:

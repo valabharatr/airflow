@@ -27,6 +27,16 @@ spec:
           value: airflow
         - name: MARIADB_PASSWORD
           value: airflow
+        - name: MYSQL_USER
+          value: airflow
+        - name: MYSQL_PASSWORD
+          value: airflow
+        - name: MYSQL_DATABASE
+          value: airflow
+        - name: MYSQL_ROOT_PASSWORD
+          value: airflow
+        - name: MYSQL_EXPLICIT_DEFAULTS_FOR_TIMESTAMP
+          value: "1"
         image: ${DB_IMAGE}
         imagePullPolicy: Never
         name: mariadb

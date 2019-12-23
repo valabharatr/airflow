@@ -6,21 +6,7 @@ data:
     export GROUP_ID=$(id -g)
     export AIRFLOW_HOME=${AIRFLOW_HOME}
     export AIRFLOW_CONFIG=${AIRFLOW_HOME}/airflow.cfg
-
-    if ! grep -Fq "${USER_ID}" /etc/passwd; then
-        # current user is an arbitrary
-        # user (its uid is not in the
-        # container /etc/passwd). Let's fix that
-        cat /opt/app-root/src/passwd.template | \
-        sed "s/\${USER_ID}/${USER_ID}/g" | \
-        sed "s/\${GROUP_ID}/${GROUP_ID}/g" | \
-        sed "s/\${HOME}/\/opt\/app-root\/src/g" > /etc/passwd
-
-        cat /opt/app-root/src/group.template | \
-        sed "s/\${USER_ID}/${USER_ID}/g" | \
-        sed "s/\${GROUP_ID}/${GROUP_ID}/g" | \
-        sed "s/\${HOME}/\/opt\/app-root\/src/g" > /etc/group
-    fi
+    echo "${USER_NAME:-default}:x:$(id -u):0:${USER_NAME:-default} user:${HOME}:/sbin/nologin" >> /etc/passwd
 
     AIRFLOW_PATH=`pip3 show apache-airflow | grep 'Location: ' | cut -d' ' -f2 || true`
       if [ -z $AIRFLOW_PY3 ]; then

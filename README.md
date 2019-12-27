@@ -43,8 +43,9 @@ $ docker push docker-registry.default.svc:5000/default/af:1.10
 $ oc project afv7
 
 # Go to relevant project and run
-oc adm policy add-scc-to-user nonroot -z airflow-cluster-access
-oc adm policy add-scc-to-user nonroot -z default
+$ oc adm policy add-scc-to-user nonroot -z airflow-cluster-access
+
+$oc adm policy add-scc-to-user nonroot -z default
 
 # Run the Script to deploy the Airflow Application
 $ bash run.sh \

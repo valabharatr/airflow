@@ -7,11 +7,11 @@ ARG KUBECTL_VERSION="1.11.0"
 ARG AIRFLOW_HOME="/app/fgh/airflow"
 ARG AIRFLOW_LOGS="$AIRFLOW_HOME/logs"
 ARG AIRFLOW_PLUGIN="$AIRFLOW_HOME/plugins"
-ARG YUM_DEPENDENCIES="mariadb-devel openldap-devel mysql-devel mariadb python-devel python-setuptools python-pip gcc python-dateutil libffi-devel zlib-devel"
+ARG YUM_DEPENDENCIES=""
 
 # Default args designed for deploying with the included Openshift template
-ARG AIRFLOW_EXTRAS=async,celery,crypto,kubernetes,mysql,s3,statsd,hive,jdbc
-ARG PIP_DEPENDENCIES="python-ldap mysqlclient"
+ARG AIRFLOW_EXTRAS=""
+ARG PIP_DEPENDENCIES=""
 
 ENV LANGUAGE en_US.UTF-8
 ENV LANG en_US.UTF-8
@@ -45,28 +45,21 @@ RUN mkdir -p $AIRFLOW_LOGS && \
     mkdir -p $AIRFLOW_HOME/logs && \
     mkdir -p $AIRFLOW_HOME/titan && \
     mkdir -p /var/log/airflowlog && \
-    chown -R 1001:0 /usr/lib/python2.7 && \
-    chown -R 1001:0 /usr/lib64/python2.7 && \
-    chmod 755 /usr/lib/python2.7 && \
-    chmod 755 /usr/lib64/python2.7 && \
-    chmod -R 777 $AIRFLOW_LOGS && \
-    chmod -R 777 $AIRFLOW_HOME && \
-    chmod -R 777 /var/log/airflowlog && \
-    chmod -R 777 $AIRFLOW_LOGS_SCHEDULER && \
-    chmod g=u /etc/passwd && \
-    yum -y install git wget java-1.8.0-openjdk vim freetds-devel krb5-server \
-           openssl-devel libffi-devel freetds python-devel curl rsync nmap nmap-ncat && \
-    yum install -y @development $YUM_DEPENDENCIES && \
+    yum -y install mariadb-devel mysql-devel mariadb python-devel python-setuptools python-pip gcc python-dateutil \
+           libffi-devel zlib-devel gcc-c++ freetds-devel openssl-devel freetds curl rsync nmap nmap-ncat && \
+    if [ -n "${YUM_DEPENDENCIES}" ]; then yum -y install ${YUM_DEPENDENCIES}; fi && \
     yum -y clean all && rm -rf /var/cache/yum && \
     pip install -U pip && \
-    pip install "marshmallow<2.20,>=2.18.0" "kombu<4.7,>=4.6.7" "apache-airflow[$AIRFLOW_EXTRAS]==$AIRFLOW_VERSION" \
-                $PIP_DEPENDENCIES async celery crypto kubernetes mysql s3 statsd python-ldap mysqlclient flask_bcrypt \
-                plotly scipy seaborn theano openpyxl tensorflow keras sklearn h5py jellyfish tldextract joypy \
-                python-Levenshtein matplotlib yara-python pillow requests networkx  setuptools wheel pytz \
-                psycopg2-binary psycopg2 pyOpenSSL ndg-httpsclient pyasn1 Flask-OAuthlib paramiko && \
+    pip install "apache-airflow[async,celery,crypto,kubernetes,mysql,statsd,jdbc]==$AIRFLOW_VERSION" \
+                mysqlclient virtualenv && \
+    if [ -n "${PIP_DEPENDENCIES}" ]; then pip install ${PIP_DEPENDENCIES}; fi && \
+    if [ -n "${AIRFLOW_EXTRAS}" ]; then pip install "${AIRFLOW_EXTRAS}==${AIRFLOW_VERSION}"; fi && \
     pip install 'redis>=2.10.5,<3' && \
-    chown -R 1001:0 $AIRFLOW_HOME
-    
+    chown -R 1001:0 $AIRFLOW_HOME && \
+    curl -L -o /usr/local/bin/kubectl \
+        https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
+    chmod +x /usr/local/bin/kubectl
+
 
 ## copy example dags
 COPY files/example_dags/ $AIRFLOW_HOME/dags/
@@ -74,10 +67,18 @@ COPY files/scripts/scheduler_health_check.py $AIRFLOW_HOME/scheduler_health_chec
 COPY files/scripts/uid_entrypoint.sh /uid_entrypoint.sh
 COPY files/scripts/get_num_cores.sh /get_num_cores.sh
 
-RUN curl -L -o /usr/local/bin/kubectl \
-        https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
-        chmod +x /usr/local/bin/kubectl
+RUN chown -R 1001:0 /usr/lib/python2.7 && \
+    chown -R 1001:0 /usr/lib64/python2.7 && \
+    chown -R 1001:0 $AIRFLOW_HOME && \
+    chmod 755 /usr/lib/python2.7 && \
+    chmod 755 /usr/lib64/python2.7 && \
+    chmod -R 777 $AIRFLOW_LOGS && \
+    chmod -R 777 $AIRFLOW_HOME && \
+    chmod -R 777 /var/log/airflowlog && \
+    chmod -R 777 $AIRFLOW_LOGS_SCHEDULER && \
+    chmod g=u /etc/passwd
 
+## Change User to default
 USER 1001
 
 ENTRYPOINT ["/uid_entrypoint.sh"]

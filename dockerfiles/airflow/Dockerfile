@@ -32,13 +32,6 @@ ENV SLUGIFY_USES_TEXT_UNIDECODE=yes \
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.232.b09-0.el7_7.x86_64/jre 
 ENV LD_LIBRARY_PATH=/opt/rh/rh-python36/root/usr/lib64
 
-## proxy
-#ENV http_proxy=http://172.18.0.1:3128/
-#ENV ftp_proxy=http://172.18.0.1:3128/
-#ENV https_proxy=http://172.18.0.1:3128/
-#ENV no_proxy=192.168.99.100,127.0.0.1,localhost,10.240.210.130,172.30.1.1,172.17.0.1,172.18.0.1,ulvsecad04.devfg.example.com,example.com,nip.io
-
-
 RUN mkdir -p $AIRFLOW_LOGS && \
     mkdir -p $AIRFLOW_LOGS_SCHEDULER && \
     mkdir -p $AIRFLOW_PLUGIN && \

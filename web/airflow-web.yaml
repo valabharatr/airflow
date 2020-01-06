@@ -78,8 +78,8 @@ spec:
         - mountPath: ${AIRFLOW_HOME}/airflow.cfg
           name: airflow-config
           subPath: airflow.cfg
-        - mountPath: ${AIRFLOW_HOME}/webserver_config.py
-          name: webserver-config
+        #- mountPath: ${AIRFLOW_HOME}/webserver_config.py
+        #  name: webserver-config
         #- mountPath: ${AIRFLOW_HOME}/dags
         #  name: airflow-dags
       dnsPolicy: ClusterFirst
@@ -119,10 +119,10 @@ spec:
           defaultMode: 420
           name: airflow-config
         name: airflow-config
-      - name: webserver-config
-        secret:
-          defaultMode: 420
-          secretName: webserver-config
+      #- name: webserver-config
+      #  secret:
+      #    defaultMode: 420
+      #    secretName: webserver-config
       - configMap:
           defaultMode: 420
           name: airflow-init

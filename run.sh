@@ -150,7 +150,7 @@ deploy() {
   waitForDeployment mariadb
   printInfo "Creating secrets"
   cat secrets/airflow-env-secret.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME_BASE64}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
-  oc apply -f secrets/webserver-config-secret.yaml -n ${AIRFLOW_NAMESPACE} | beautify
+  #oc apply -f secrets/webserver-config-secret.yaml -n ${AIRFLOW_NAMESPACE} | beautify
   printInfo "Creating ConfigMaps. Namespace for DAGs: ${AIRFLOW_NAMESPACE}. Run pods as user: ${NAMESPACE_UID}"
   cat configmaps/airflow-config-cm.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME}@g" | sed "s@\${AIRFLOW_NAMESPACE}@${AIRFLOW_NAMESPACE}@g" | sed "s@\${NAMESPACE_UID}@${NAMESPACE_UID}@g" | sed "s@\${AIRFLOW_IMAGE_NAME}@${AIRFLOW_IMAGE_NAME}@g" | sed "s@\${AIRFLOW_IMAGE_TAG}@${AIRFLOW_IMAGE_TAG}@g" | sed "s@\${AIRFLOW_NAMESPACE}@${AIRFLOW_NAMESPACE}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify
   cat configmaps/airflow-init-cm.yaml | sed "s@\${AIRFLOW_HOME}@${AIRFLOW_HOME}@g" | oc apply -f - -n ${AIRFLOW_NAMESPACE} | beautify

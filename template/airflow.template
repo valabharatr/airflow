@@ -1,0 +1,1037 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: workflow
+objects:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      checksum/config: fd949609960165c4794623fa0dd76259b49687506f0306783511ae06f7a59bb7
+      configmap.fabric8.io/update-on-change: airflow-env
+      openshift.io/scc: restricted
+    creationTimestamp: null
+    generateName: airflow-scheduler-5cf467c497-
+    labels:
+      app: airflow-scheduler
+      pod-template-hash: "1790237053"
+      release: airflow
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: airflow-scheduler-5cf467c497
+      uid: 5f78509d-30f0-11ea-95be-005056aa7606
+  spec:
+    containers:
+    - args:
+      - scheduler
+      env:
+      - name: AIRFLOW_KUBE_NAMESPACE
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.namespace
+      envFrom:
+      - secretRef:
+          name: airflow-env
+      image: mylocalimage
+      imagePullPolicy: Never
+      name: scheduler
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - KILL
+          - MKNOD
+          - SETGID
+          - SETUID
+        runAsUser: 1000270000
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /opt/airflow/airflow.cfg
+        name: airflow-config
+        subPath: airflow.cfg
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: airflow-cluster-access-token-lhbnw
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    imagePullSecrets:
+    - name: airflow-cluster-access-dockercfg-fwqs7
+    nodeName: node2.nminternal.com
+    nodeSelector:
+      role: app
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 1000270000
+      seLinuxOptions:
+        level: s0:c16,c15
+    serviceAccount: airflow-cluster-access
+    serviceAccountName: airflow-cluster-access
+    terminationGracePeriodSeconds: 30
+    volumes:
+    - configMap:
+        defaultMode: 420
+        name: airflow-config
+      name: airflow-config
+    - name: airflow-cluster-access-token-lhbnw
+      secret:
+        defaultMode: 420
+        secretName: airflow-cluster-access-token-lhbnw
+  status: {}
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      checksum/config: fd949609960165c4794623fa0dd76259b49687506f0306783511ae06f7a59bb7
+      configmap.fabric8.io/update-on-change: airflow-env
+      openshift.io/scc: restricted
+    creationTimestamp: null
+    generateName: airflow-web-55877f8cd9-
+    labels:
+      app: airflow-web
+      pod-template-hash: "1143394785"
+      release: airflow
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: airflow-web-55877f8cd9
+      uid: 5fb4b2c8-30f0-11ea-95be-005056aa7606
+  spec:
+    containers:
+    - args:
+      - webserver
+      env:
+      - name: AIRFLOW_CONFIG
+        value: /opt/airflow/airflow.cfg
+      - name: AIRFLOW_KUBE_NAMESPACE
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.namespace
+      envFrom:
+      - secretRef:
+          name: airflow-env
+      image: mylocalimage
+      imagePullPolicy: Never
+      livenessProbe:
+        failureThreshold: 5
+        httpGet:
+          path: /health
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5
+      name: webserver
+      ports:
+      - containerPort: 8080
+        name: webserver
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /health
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 5
+        periodSeconds: 5
+        successThreshold: 1
+        timeoutSeconds: 5
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - KILL
+          - MKNOD
+          - SETGID
+          - SETUID
+        runAsUser: 1000270000
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /opt/airflow/airflow.cfg
+        name: airflow-config
+        subPath: airflow.cfg
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: default-token-s9tkt
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    imagePullSecrets:
+    - name: default-dockercfg-xvhsk
+    initContainers:
+    - args:
+      - -cx
+      - bash -x /entrypoint/init-airflow.sh
+      command:
+      - bash
+      env:
+      - name: AIRFLOW_CONFIG
+        value: /opt/airflow/airflow.cfg
+      envFrom:
+      - secretRef:
+          name: airflow-env
+      image: mylocalimage
+      imagePullPolicy: Never
+      name: init-airflow
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - KILL
+          - MKNOD
+          - SETGID
+          - SETUID
+        runAsUser: 1000270000
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /opt/airflow/airflow.cfg
+        name: airflow-config
+        subPath: airflow.cfg
+      - mountPath: /entrypoint
+        name: init-airflow
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: default-token-s9tkt
+        readOnly: true
+    nodeName: node1.nminternal.com
+    nodeSelector:
+      role: app
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 1000270000
+      seLinuxOptions:
+        level: s0:c16,c15
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    volumes:
+    - configMap:
+        defaultMode: 420
+        name: airflow-config
+      name: airflow-config
+    - configMap:
+        defaultMode: 420
+        name: airflow-init
+      name: init-airflow
+    - name: default-token-s9tkt
+      secret:
+        defaultMode: 420
+        secretName: default-token-s9tkt
+  status: {}
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      openshift.io/scc: restricted
+    creationTimestamp: null
+    generateName: mariadb-7789655666-
+    labels:
+      app: airflow
+      component: mariadb
+      pod-template-hash: "3345211222"
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: mariadb-7789655666
+      uid: 50eb8750-30f0-11ea-95be-005056aa7606
+  spec:
+    containers:
+    - env:
+      - name: MARIADB_ROOT_PASSWORD
+        value: airflow
+      - name: MARIADB_DATABASE
+        value: airflow
+      - name: MARIADB_USER
+        value: airflow
+      - name: MARIADB_PASSWORD
+        value: airflow
+      - name: MYSQL_USER
+        value: airflow
+      - name: MYSQL_PASSWORD
+        value: airflow
+      - name: MYSQL_DATABASE
+        value: airflow
+      - name: MYSQL_ROOT_PASSWORD
+        value: airflow
+      - name: MYSQL_EXPLICIT_DEFAULTS_FOR_TIMESTAMP
+        value: "1"
+      image: docker-registry-default.isvapps-poc.netmagicsolutions.com/default/mariadb:v11
+      imagePullPolicy: Never
+      livenessProbe:
+        failureThreshold: 3
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        successThreshold: 1
+        tcpSocket:
+          port: 3306
+        timeoutSeconds: 1
+      name: mariadb
+      ports:
+      - containerPort: 3306
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 10
+        initialDelaySeconds: 5
+        periodSeconds: 3
+        successThreshold: 1
+        tcpSocket:
+          port: 3306
+        timeoutSeconds: 1
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - KILL
+          - MKNOD
+          - SETGID
+          - SETUID
+        runAsUser: 1000270000
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: default-token-s9tkt
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    imagePullSecrets:
+    - name: default-dockercfg-xvhsk
+    nodeName: node2.nminternal.com
+    nodeSelector:
+      role: app
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 1000270000
+      seLinuxOptions:
+        level: s0:c16,c15
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    volumes:
+    - name: default-token-s9tkt
+      secret:
+        defaultMode: 420
+        secretName: default-token-s9tkt
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"airflow-web"},"name":"airflow-web","namespace":"test3"},"spec":{"externalTrafficPolicy":"Cluster","ports":[{"name":"web","nodePort":30965,"port":8080,"protocol":"TCP","targetPort":8080}],"selector":{"app":"airflow-web","release":"airflow"},"sessionAffinity":"None","type":"NodePort"}}
+    creationTimestamp: null
+    labels:
+      app: airflow-web
+    name: airflow-web
+  spec:
+    externalTrafficPolicy: Cluster
+    ports:
+    - name: web
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: airflow-web
+      release: airflow
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"mariadb"},"name":"mariadb","namespace":"test3"},"spec":{"ports":[{"name":"3306-tcp","port":3306,"protocol":"TCP","targetPort":3306}],"selector":{"app":"airflow","component":"mariadb"},"sessionAffinity":"None","type":"ClusterIP"}}
+    creationTimestamp: null
+    labels:
+      app: mariadb
+    name: mariadb
+  spec:
+    ports:
+    - name: 3306-tcp
+      port: 3306
+      protocol: TCP
+      targetPort: 3306
+    selector:
+      app: airflow
+      component: mariadb
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"extensions/v1beta1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"airflow-scheduler"},"name":"airflow-scheduler","namespace":"test3"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"airflow-scheduler","release":"airflow"}},"strategy":{"rollingUpdate":{"maxSurge":0,"maxUnavailable":"100%"},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"checksum/config":"fd949609960165c4794623fa0dd76259b49687506f0306783511ae06f7a59bb7","configmap.fabric8.io/update-on-change":"airflow-env"},"creationTimestamp":null,"labels":{"app":"airflow-scheduler","release":"airflow"}},"spec":{"containers":[{"args":["scheduler"],"env":[{"name":"AIRFLOW_KUBE_NAMESPACE","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.namespace"}}}],"envFrom":[{"secretRef":{"name":"airflow-env"}}],"image":"mylocalimage","imagePullPolicy":"Never","name":"scheduler","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/airflow/airflow.cfg","name":"airflow-config","subPath":"airflow.cfg"}]}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","schedulerName":"default-scheduler","serviceAccount":"airflow-cluster-access","serviceAccountName":"airflow-cluster-access","terminationGracePeriodSeconds":30,"volumes":[{"configMap":{"defaultMode":420,"name":"airflow-config"},"name":"airflow-config"}]}}}}
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: airflow-scheduler
+    name: airflow-scheduler
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: airflow-scheduler
+        release: airflow
+    strategy:
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 100%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          checksum/config: fd949609960165c4794623fa0dd76259b49687506f0306783511ae06f7a59bb7
+          configmap.fabric8.io/update-on-change: airflow-env
+        creationTimestamp: null
+        labels:
+          app: airflow-scheduler
+          release: airflow
+      spec:
+        containers:
+        - args:
+          - scheduler
+          env:
+          - name: AIRFLOW_KUBE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          envFrom:
+          - secretRef:
+              name: airflow-env
+          image: mylocalimage
+          imagePullPolicy: Never
+          name: scheduler
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /opt/airflow/airflow.cfg
+            name: airflow-config
+            subPath: airflow.cfg
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: airflow-cluster-access
+        serviceAccountName: airflow-cluster-access
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: airflow-config
+          name: airflow-config
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: 2020-01-07T01:52:34Z
+      lastUpdateTime: 2020-01-07T01:52:34Z
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: 2020-01-07T01:52:34Z
+      lastUpdateTime: 2020-01-07T01:52:38Z
+      message: ReplicaSet "airflow-scheduler-5cf467c497" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"extensions/v1beta1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"airflow-web"},"name":"airflow-web","namespace":"test3"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"airflow-web","release":"airflow"}},"strategy":{"rollingUpdate":{"maxSurge":1,"maxUnavailable":0},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"checksum/config":"fd949609960165c4794623fa0dd76259b49687506f0306783511ae06f7a59bb7","configmap.fabric8.io/update-on-change":"airflow-env"},"labels":{"app":"airflow-web","release":"airflow"}},"spec":{"containers":[{"args":["webserver"],"env":[{"name":"AIRFLOW_CONFIG","value":"/opt/airflow/airflow.cfg"},{"name":"AIRFLOW_KUBE_NAMESPACE","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.namespace"}}}],"envFrom":[{"secretRef":{"name":"airflow-env"}}],"image":"mylocalimage","imagePullPolicy":"Never","livenessProbe":{"failureThreshold":5,"httpGet":{"path":"/health","port":8080,"scheme":"HTTP"},"initialDelaySeconds":5,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5},"name":"webserver","ports":[{"containerPort":8080,"name":"webserver","protocol":"TCP"}],"readinessProbe":{"failureThreshold":3,"httpGet":{"path":"/health","port":8080,"scheme":"HTTP"},"initialDelaySeconds":5,"periodSeconds":5,"successThreshold":1,"timeoutSeconds":5},"resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/airflow/airflow.cfg","name":"airflow-config","subPath":"airflow.cfg"}]}],"dnsPolicy":"ClusterFirst","initContainers":[{"args":["-cx","bash -x /entrypoint/init-airflow.sh"],"command":["bash"],"env":[{"name":"AIRFLOW_CONFIG","value":"/opt/airflow/airflow.cfg"}],"envFrom":[{"secretRef":{"name":"airflow-env"}}],"image":"mylocalimage","imagePullPolicy":"Never","name":"init-airflow","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/airflow/airflow.cfg","name":"airflow-config","subPath":"airflow.cfg"},{"mountPath":"/entrypoint","name":"init-airflow"}]}],"restartPolicy":"Always","schedulerName":"default-scheduler","terminationGracePeriodSeconds":30,"volumes":[{"configMap":{"defaultMode":420,"name":"airflow-config"},"name":"airflow-config"},{"configMap":{"defaultMode":420,"name":"airflow-init"},"name":"init-airflow"}]}}}}
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: airflow-web
+    name: airflow-web
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: airflow-web
+        release: airflow
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          checksum/config: fd949609960165c4794623fa0dd76259b49687506f0306783511ae06f7a59bb7
+          configmap.fabric8.io/update-on-change: airflow-env
+        creationTimestamp: null
+        labels:
+          app: airflow-web
+          release: airflow
+      spec:
+        containers:
+        - args:
+          - webserver
+          env:
+          - name: AIRFLOW_CONFIG
+            value: /opt/airflow/airflow.cfg
+          - name: AIRFLOW_KUBE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          envFrom:
+          - secretRef:
+              name: airflow-env
+          image: mylocalimage
+          imagePullPolicy: Never
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: webserver
+          ports:
+          - containerPort: 8080
+            name: webserver
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /opt/airflow/airflow.cfg
+            name: airflow-config
+            subPath: airflow.cfg
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - args:
+          - -cx
+          - bash -x /entrypoint/init-airflow.sh
+          command:
+          - bash
+          env:
+          - name: AIRFLOW_CONFIG
+            value: /opt/airflow/airflow.cfg
+          envFrom:
+          - secretRef:
+              name: airflow-env
+          image: mylocalimage
+          imagePullPolicy: Never
+          name: init-airflow
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /opt/airflow/airflow.cfg
+            name: airflow-config
+            subPath: airflow.cfg
+          - mountPath: /entrypoint
+            name: init-airflow
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: airflow-config
+          name: airflow-config
+        - configMap:
+            defaultMode: 420
+            name: airflow-init
+          name: init-airflow
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: 2020-01-07T01:54:58Z
+      lastUpdateTime: 2020-01-07T01:54:58Z
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: 2020-01-07T01:52:34Z
+      lastUpdateTime: 2020-01-07T01:54:58Z
+      message: ReplicaSet "airflow-web-55877f8cd9" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"airflow","component":"mariadb"},"name":"mariadb","namespace":"test3"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"airflow","component":"mariadb"}},"template":{"metadata":{"labels":{"app":"airflow","component":"mariadb"}},"spec":{"containers":[{"env":[{"name":"MARIADB_ROOT_PASSWORD","value":"airflow"},{"name":"MARIADB_DATABASE","value":"airflow"},{"name":"MARIADB_USER","value":"airflow"},{"name":"MARIADB_PASSWORD","value":"airflow"},{"name":"MYSQL_USER","value":"airflow"},{"name":"MYSQL_PASSWORD","value":"airflow"},{"name":"MYSQL_DATABASE","value":"airflow"},{"name":"MYSQL_ROOT_PASSWORD","value":"airflow"},{"name":"MYSQL_EXPLICIT_DEFAULTS_FOR_TIMESTAMP","value":"1"}],"image":"docker-registry-default.isvapps-poc.netmagicsolutions.com/default/mariadb:v11","imagePullPolicy":"Never","livenessProbe":{"failureThreshold":3,"initialDelaySeconds":30,"periodSeconds":10,"successThreshold":1,"tcpSocket":{"port":3306},"timeoutSeconds":1},"name":"mariadb","ports":[{"containerPort":3306}],"readinessProbe":{"failureThreshold":10,"initialDelaySeconds":5,"periodSeconds":3,"successThreshold":1,"tcpSocket":{"port":3306},"timeoutSeconds":1},"resources":{}}],"restartPolicy":"Always"}}}}
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: airflow
+      component: mariadb
+    name: mariadb
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: airflow
+        component: mariadb
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: airflow
+          component: mariadb
+      spec:
+        containers:
+        - env:
+          - name: MARIADB_ROOT_PASSWORD
+            value: airflow
+          - name: MARIADB_DATABASE
+            value: airflow
+          - name: MARIADB_USER
+            value: airflow
+          - name: MARIADB_PASSWORD
+            value: airflow
+          - name: MYSQL_USER
+            value: airflow
+          - name: MYSQL_PASSWORD
+            value: airflow
+          - name: MYSQL_DATABASE
+            value: airflow
+          - name: MYSQL_ROOT_PASSWORD
+            value: airflow
+          - name: MYSQL_EXPLICIT_DEFAULTS_FOR_TIMESTAMP
+            value: "1"
+          image: docker-registry-default.isvapps-poc.netmagicsolutions.com/default/mariadb:v11
+          imagePullPolicy: Never
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3306
+            timeoutSeconds: 1
+          name: mariadb
+          ports:
+          - containerPort: 3306
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 10
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            successThreshold: 1
+            tcpSocket:
+              port: 3306
+            timeoutSeconds: 1
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: 2020-01-07T01:52:24Z
+      lastUpdateTime: 2020-01-07T01:52:24Z
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: 2020-01-07T01:52:09Z
+      lastUpdateTime: 2020-01-07T01:52:24Z
+      message: ReplicaSet "mariadb-7789655666" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "1"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: airflow-scheduler
+      pod-template-hash: "1790237053"
+      release: airflow
+    name: airflow-scheduler-5cf467c497
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: airflow-scheduler
+      uid: 5f770daf-30f0-11ea-95be-005056aa7606
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: airflow-scheduler
+        pod-template-hash: "1790237053"
+        release: airflow
+    template:
+      metadata:
+        annotations:
+          checksum/config: fd949609960165c4794623fa0dd76259b49687506f0306783511ae06f7a59bb7
+          configmap.fabric8.io/update-on-change: airflow-env
+        creationTimestamp: null
+        labels:
+          app: airflow-scheduler
+          pod-template-hash: "1790237053"
+          release: airflow
+      spec:
+        containers:
+        - args:
+          - scheduler
+          env:
+          - name: AIRFLOW_KUBE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          envFrom:
+          - secretRef:
+              name: airflow-env
+          image: mylocalimage
+          imagePullPolicy: Never
+          name: scheduler
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /opt/airflow/airflow.cfg
+            name: airflow-config
+            subPath: airflow.cfg
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: airflow-cluster-access
+        serviceAccountName: airflow-cluster-access
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: airflow-config
+          name: airflow-config
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: airflow-web
+      pod-template-hash: "1143394785"
+      release: airflow
+    name: airflow-web-55877f8cd9
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: airflow-web
+      uid: 5fb3795d-30f0-11ea-95be-005056aa7606
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: airflow-web
+        pod-template-hash: "1143394785"
+        release: airflow
+    template:
+      metadata:
+        annotations:
+          checksum/config: fd949609960165c4794623fa0dd76259b49687506f0306783511ae06f7a59bb7
+          configmap.fabric8.io/update-on-change: airflow-env
+        creationTimestamp: null
+        labels:
+          app: airflow-web
+          pod-template-hash: "1143394785"
+          release: airflow
+      spec:
+        containers:
+        - args:
+          - webserver
+          env:
+          - name: AIRFLOW_CONFIG
+            value: /opt/airflow/airflow.cfg
+          - name: AIRFLOW_KUBE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          envFrom:
+          - secretRef:
+              name: airflow-env
+          image: mylocalimage
+          imagePullPolicy: Never
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: webserver
+          ports:
+          - containerPort: 8080
+            name: webserver
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /opt/airflow/airflow.cfg
+            name: airflow-config
+            subPath: airflow.cfg
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - args:
+          - -cx
+          - bash -x /entrypoint/init-airflow.sh
+          command:
+          - bash
+          env:
+          - name: AIRFLOW_CONFIG
+            value: /opt/airflow/airflow.cfg
+          envFrom:
+          - secretRef:
+              name: airflow-env
+          image: mylocalimage
+          imagePullPolicy: Never
+          name: init-airflow
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /opt/airflow/airflow.cfg
+            name: airflow-config
+            subPath: airflow.cfg
+          - mountPath: /entrypoint
+            name: init-airflow
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: airflow-config
+          name: airflow-config
+        - configMap:
+            defaultMode: 420
+            name: airflow-init
+          name: init-airflow
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: airflow
+      component: mariadb
+      pod-template-hash: "3345211222"
+    name: mariadb-7789655666
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: mariadb
+      uid: 50ea49ee-30f0-11ea-95be-005056aa7606
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: airflow
+        component: mariadb
+        pod-template-hash: "3345211222"
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: airflow
+          component: mariadb
+          pod-template-hash: "3345211222"
+      spec:
+        containers:
+        - env:
+          - name: MARIADB_ROOT_PASSWORD
+            value: airflow
+          - name: MARIADB_DATABASE
+            value: airflow
+          - name: MARIADB_USER
+            value: airflow
+          - name: MARIADB_PASSWORD
+            value: airflow
+          - name: MYSQL_USER
+            value: airflow
+          - name: MYSQL_PASSWORD
+            value: airflow
+          - name: MYSQL_DATABASE
+            value: airflow
+          - name: MYSQL_ROOT_PASSWORD
+            value: airflow
+          - name: MYSQL_EXPLICIT_DEFAULTS_FOR_TIMESTAMP
+            value: "1"
+          image: docker-registry-default.isvapps-poc.netmagicsolutions.com/default/mariadb:v11
+          imagePullPolicy: Never
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3306
+            timeoutSeconds: 1
+          name: mariadb
+          ports:
+          - containerPort: 3306
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 10
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            successThreshold: 1
+            tcpSocket:
+              port: 3306
+            timeoutSeconds: 1
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"route.openshift.io/v1","kind":"Route","metadata":{"annotations":{},"labels":{"app":"airflow-web"},"name":"airflow-web","namespace":"test3"},"spec":{"port":{"targetPort":"web"},"to":{"kind":"Service","name":"airflow-web","weight":100},"wildcardPolicy":"None"}}
+      openshift.io/host.generated: "true"
+    creationTimestamp: null
+    labels:
+      app: airflow-web
+    name: airflow-web
+  spec:
+    host: airflow-web-test3.isvapps-poc.netmagicsolutions.com
+    port:
+      targetPort: web
+    to:
+      kind: Service
+      name: airflow-web
+      weight: 100
+    wildcardPolicy: None
+  status:
+    ingress:
+    - conditions:
+      - lastTransitionTime: 2020-01-07T01:52:35Z
+        status: "True"
+        type: Admitted
+      host: airflow-web-test3.isvapps-poc.netmagicsolutions.com
+      routerName: router
+      wildcardPolicy: None

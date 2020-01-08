@@ -719,9 +719,11 @@ parameters:
 - name: DB_USER
   displayName: Mariadb User
   required: true
+  value: airflow
 - name: DB_PASSWORD
   displayName: Mariadb Password
   required: true
+  value: airflow
 - name: DB_AIRFLOW
   displayName: Mariadb Airflow Database Name
   required: true

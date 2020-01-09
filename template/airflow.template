@@ -1,8 +1,11 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  creationTimestamp: null
   name: airflow
+  annotations:	
+    openshift.io/display-name: "Airflow - K8S Executor"	
+    description: "Airflow template with Kubernetes executor"	
+    tags: airflow
 objects:
 - apiVersion: v1
   kind: RoleBinding
@@ -466,6 +469,10 @@ objects:
         serviceAccount: airflow-cluster-access
         serviceAccountName: airflow-cluster-access
         terminationGracePeriodSeconds: 30
+        initContainers:
+        - name: init-mariadb
+          image: busybox:1.28
+          command: ['sh', '-c', 'until telnet ${DB_HOST} 3306; do echo waiting for mariadb; sleep 20; done;']
         volumes:
         - configMap:
             defaultMode: 420
@@ -560,6 +567,9 @@ objects:
             subPath: airflow.cfg
         dnsPolicy: ClusterFirst
         initContainers:
+        - name: init-mariadb
+          image: busybox:1.28
+          command: ['sh', '-c', 'until telnet ${DB_HOST} 3306; do echo waiting for mariadb; sleep 20; done;']
         - args:
           - -cx
           - bash -x /entrypoint/init-airflow.sh
